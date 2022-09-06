@@ -81,10 +81,7 @@ struct CefWindowInfoTraits {
                          bool copy) {
     cef_string_set(src->window_name.str, src->window_name.length,
                    &target->window_name, copy);
-    target->x = src->x;
-    target->y = src->y;
-    target->width = src->width;
-    target->height = src->height;
+    target->bounds = src->bounds;
     target->parent_window = src->parent_window;
     target->windowless_rendering_enabled = src->windowless_rendering_enabled;
     target->shared_texture_enabled = src->shared_texture_enabled;
@@ -102,15 +99,15 @@ class CefWindowInfo : public CefStructBase<CefWindowInfoTraits> {
   explicit CefWindowInfo(const cef_window_info_t& r) : parent(r) {}
   explicit CefWindowInfo(const CefWindowInfo& r) : parent(r) {}
 
+  CefWindowInfo& operator=(const CefWindowInfo&) = default;
+  CefWindowInfo& operator=(CefWindowInfo&&) = default;
+
   ///
   // Create the browser as a child window.
   ///
-  void SetAsChild(CefWindowHandle parent, const CefRect& windowRect) {
+  void SetAsChild(CefWindowHandle parent, const CefRect& bounds) {
     parent_window = parent;
-    x = windowRect.x;
-    y = windowRect.y;
-    width = windowRect.width;
-    height = windowRect.height;
+    this->bounds = bounds;
   }
 
   ///

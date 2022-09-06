@@ -1,4 +1,4 @@
-// Copyright (c) 2011 Marshall A. Greenblatt. All rights reserved.
+// Copyright (c) 2022 Marshall A. Greenblatt. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -34,30 +34,35 @@
 // tools directory for more information.
 //
 
-#ifndef CEF_INCLUDE_CEF_REQUEST_CALLBACK_H_
-#define CEF_INCLUDE_CEF_REQUEST_CALLBACK_H_
+#ifndef CEF_INCLUDE_CEF_COMMAND_HANDLER_H_
+#define CEF_INCLUDE_CEF_COMMAND_HANDLER_H_
 #pragma once
 
 #include "include/cef_base.h"
+#include "include/cef_browser.h"
 
 ///
-// Callback interface used for asynchronous continuation of url requests.
+// Implement this interface to handle events related to commands. The methods of
+// this class will be called on the UI thread.
 ///
-/*--cef(source=library)--*/
-class CefRequestCallback : public virtual CefBaseRefCounted {
+/*--cef(source=client)--*/
+class CefCommandHandler : public virtual CefBaseRefCounted {
  public:
   ///
-  // Continue the url request. If |allow| is true the request will be continued.
-  // Otherwise, the request will be canceled.
-  ///
-  /*--cef(capi_name=cont)--*/
-  virtual void Continue(bool allow) = 0;
-
-  ///
-  // Cancel the url request.
+  // Called to execute a Chrome command triggered via menu selection or keyboard
+  // shortcut. Values for |command_id| can be found in the cef_command_ids.h
+  // file. |disposition| provides information about the intended command target.
+  // Return true if the command was handled or false for the default
+  // implementation. For context menu commands this will be called after
+  // CefContextMenuHandler::OnContextMenuCommand. Only used with the Chrome
+  // runtime.
   ///
   /*--cef()--*/
-  virtual void Cancel() = 0;
+  virtual bool OnChromeCommand(CefRefPtr<CefBrowser> browser,
+                               int command_id,
+                               cef_window_open_disposition_t disposition) {
+    return false;
+  }
 };
 
-#endif  // CEF_INCLUDE_CEF_REQUEST_CALLBACK_H_
+#endif  // CEF_INCLUDE_CEF_COMMAND_HANDLER_H_

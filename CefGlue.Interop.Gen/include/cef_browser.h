@@ -52,14 +52,21 @@ class CefBrowserHost;
 class CefClient;
 
 ///
-// Class used to represent a browser window. When used in the browser process
-// the methods of this class may be called on any thread unless otherwise
-// indicated in the comments. When used in the render process the methods of
-// this class may only be called on the main thread.
+// Class used to represent a browser. When used in the browser process the
+// methods of this class may be called on any thread unless otherwise indicated
+// in the comments. When used in the render process the methods of this class
+// may only be called on the main thread.
 ///
 /*--cef(source=library)--*/
 class CefBrowser : public virtual CefBaseRefCounted {
  public:
+  ///
+  // True if this object is currently valid. This will return false after
+  // CefLifeSpanHandler::OnBeforeClose is called.
+  ///
+  /*--cef()--*/
+  virtual bool IsValid() = 0;
+
   ///
   // Returns the browser host object. This method can only be called in the
   // browser process.
@@ -130,7 +137,7 @@ class CefBrowser : public virtual CefBaseRefCounted {
   virtual bool IsSame(CefRefPtr<CefBrowser> that) = 0;
 
   ///
-  // Returns true if the window is a popup window.
+  // Returns true if the browser is a popup.
   ///
   /*--cef()--*/
   virtual bool IsPopup() = 0;
@@ -142,13 +149,19 @@ class CefBrowser : public virtual CefBaseRefCounted {
   virtual bool HasDocument() = 0;
 
   ///
-  // Returns the main (top-level) frame for the browser window.
+  // Returns the main (top-level) frame for the browser. In the browser process
+  // this will return a valid object until after
+  // CefLifeSpanHandler::OnBeforeClose is called. In the renderer process this
+  // will return NULL if the main frame is hosted in a different renderer
+  // process (e.g. for cross-origin sub-frames). The main frame object will
+  // change during cross-origin navigation or re-navigation after renderer
+  // process termination (due to crashes, etc).
   ///
   /*--cef()--*/
   virtual CefRefPtr<CefFrame> GetMainFrame() = 0;
 
   ///
-  // Returns the focused frame for the browser window.
+  // Returns the focused frame for the browser.
   ///
   /*--cef()--*/
   virtual CefRefPtr<CefFrame> GetFocusedFrame() = 0;
@@ -193,14 +206,11 @@ class CefRunFileDialogCallback : public virtual CefBaseRefCounted {
  public:
   ///
   // Called asynchronously after the file dialog is dismissed.
-  // |selected_accept_filter| is the 0-based index of the value selected from
-  // the accept filters array passed to CefBrowserHost::RunFileDialog.
   // |file_paths| will be a single value or a list of values depending on the
   // dialog mode. If the selection was cancelled |file_paths| will be empty.
   ///
-  /*--cef(index_param=selected_accept_filter,optional_param=file_paths)--*/
+  /*--cef(optional_param=file_paths)--*/
   virtual void OnFileDialogDismissed(
-      int selected_accept_filter,
       const std::vector<CefString>& file_paths) = 0;
 };
 
@@ -261,10 +271,9 @@ class CefDownloadImageCallback : public virtual CefBaseRefCounted {
 };
 
 ///
-// Class used to represent the browser process aspects of a browser window. The
-// methods of this class can only be called in the browser process. They may be
-// called on any thread in that process unless otherwise indicated in the
-// comments.
+// Class used to represent the browser process aspects of a browser. The methods
+// of this class can only be called in the browser process. They may be called
+// on any thread in that process unless otherwise indicated in the comments.
 ///
 /*--cef(source=library)--*/
 class CefBrowserHost : public virtual CefBaseRefCounted {
@@ -275,14 +284,14 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
   typedef cef_paint_element_type_t PaintElementType;
 
   ///
-  // Create a new browser window using the window parameters specified by
-  // |windowInfo|. All values will be copied internally and the actual window
-  // will be created on the UI thread. If |request_context| is empty the
-  // global request context will be used. This method can be called on any
-  // browser process thread and will not block. The optional |extra_info|
-  // parameter provides an opportunity to specify extra information specific
-  // to the created browser that will be passed to
-  // CefRenderProcessHandler::OnBrowserCreated() in the render process.
+  // Create a new browser using the window parameters specified by |windowInfo|.
+  // All values will be copied internally and the actual window (if any) will be
+  // created on the UI thread. If |request_context| is empty the global request
+  // context will be used. This method can be called on any browser process
+  // thread and will not block. The optional |extra_info| parameter provides an
+  // opportunity to specify extra information specific to the created browser
+  // that will be passed to CefRenderProcessHandler::OnBrowserCreated() in the
+  // render process.
   ///
   /*--cef(optional_param=client,optional_param=url,
           optional_param=request_context,optional_param=extra_info)--*/
@@ -294,13 +303,12 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
                             CefRefPtr<CefRequestContext> request_context);
 
   ///
-  // Create a new browser window using the window parameters specified by
-  // |windowInfo|. If |request_context| is empty the global request context
-  // will be used. This method can only be called on the browser process UI
-  // thread. The optional |extra_info| parameter provides an opportunity to
-  // specify extra information specific to the created browser that will be
-  // passed to CefRenderProcessHandler::OnBrowserCreated() in the render
-  // process.
+  // Create a new browser using the window parameters specified by |windowInfo|.
+  // If |request_context| is empty the global request context will be used. This
+  // method can only be called on the browser process UI thread. The optional
+  // |extra_info| parameter provides an opportunity to specify extra information
+  // specific to the created browser that will be passed to
+  // CefRenderProcessHandler::OnBrowserCreated() in the render process.
   ///
   /*--cef(optional_param=client,optional_param=url,
           optional_param=request_context,optional_param=extra_info)--*/
@@ -333,9 +341,9 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
 
   ///
   // Helper for closing a browser. Call this method from the top-level window
-  // close handler. Internally this calls CloseBrowser(false) if the close has
-  // not yet been initiated. This method returns false while the close is
-  // pending and true after the close has completed. See CloseBrowser() and
+  // close handler (if any). Internally this calls CloseBrowser(false) if the
+  // close has not yet been initiated. This method returns false while the close
+  // is pending and true after the close has completed. See CloseBrowser() and
   // CefLifeSpanHandler::DoClose() documentation for additional usage
   // information. This method must be called on the browser process UI thread.
   ///
@@ -349,18 +357,19 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
   virtual void SetFocus(bool focus) = 0;
 
   ///
-  // Retrieve the window handle for this browser. If this browser is wrapped in
-  // a CefBrowserView this method should be called on the browser process UI
-  // thread and it will return the handle for the top-level native window.
+  // Retrieve the window handle (if any) for this browser. If this browser is
+  // wrapped in a CefBrowserView this method should be called on the browser
+  // process UI thread and it will return the handle for the top-level native
+  // window.
   ///
   /*--cef()--*/
   virtual CefWindowHandle GetWindowHandle() = 0;
 
   ///
-  // Retrieve the window handle of the browser that opened this browser. Will
-  // return NULL for non-popup windows or if this browser is wrapped in a
-  // CefBrowserView. This method can be used in combination with custom handling
-  // of modal windows.
+  // Retrieve the window handle (if any) of the browser that opened this
+  // browser. Will return NULL for non-popup browsers or if this browser is
+  // wrapped in a CefBrowserView. This method can be used in combination with
+  // custom handling of modal windows.
   ///
   /*--cef()--*/
   virtual CefWindowHandle GetOpenerWindowHandle() = 0;
@@ -409,19 +418,17 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
   // selectable file types and may any combination of (a) valid lower-cased MIME
   // types (e.g. "text/*" or "image/*"), (b) individual file extensions (e.g.
   // ".txt" or ".png"), or (c) combined description and file extension delimited
-  // using "|" and ";" (e.g. "Image Types|.png;.gif;.jpg").
-  // |selected_accept_filter| is the 0-based index of the filter that will be
-  // selected by default. |callback| will be executed after the dialog is
-  // dismissed or immediately if another dialog is already pending. The dialog
-  // will be initiated asynchronously on the UI thread.
+  // using "|" and ";" (e.g. "Image Types|.png;.gif;.jpg"). |callback| will be
+  // executed after the dialog is dismissed or immediately if another dialog is
+  // already pending. The dialog will be initiated asynchronously on the UI
+  // thread.
   ///
   /*--cef(optional_param=title,optional_param=default_file_path,
-          optional_param=accept_filters,index_param=selected_accept_filter)--*/
+          optional_param=accept_filters)--*/
   virtual void RunFileDialog(FileDialogMode mode,
                              const CefString& title,
                              const CefString& default_file_path,
                              const std::vector<CefString>& accept_filters,
-                             int selected_accept_filter,
                              CefRefPtr<CefRunFileDialogCallback> callback) = 0;
 
   ///
@@ -467,19 +474,16 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
                           CefRefPtr<CefPdfPrintCallback> callback) = 0;
 
   ///
-  // Search for |searchText|. |identifier| must be a unique ID and these IDs
-  // must strictly increase so that newer requests always have greater IDs than
-  // older requests. If |identifier| is zero or less than the previous ID value
-  // then it will be automatically assigned a new valid ID. |forward| indicates
-  // whether to search forward or backward within the page. |matchCase|
-  // indicates whether the search should be case-sensitive. |findNext| indicates
-  // whether this is the first request or a follow-up. The CefFindHandler
-  // instance, if any, returned via CefClient::GetFindHandler will be called to
-  // report find results.
+  // Search for |searchText|. |forward| indicates whether to search forward or
+  // backward within the page. |matchCase| indicates whether the search should
+  // be case-sensitive. |findNext| indicates whether this is the first request
+  // or a follow-up. The search will be restarted if |searchText| or |matchCase|
+  // change. The search will be stopped if |searchText| is empty. The
+  // CefFindHandler instance, if any, returned via CefClient::GetFindHandler
+  // will be called to report find results.
   ///
   /*--cef()--*/
-  virtual void Find(int identifier,
-                    const CefString& searchText,
+  virtual void Find(const CefString& searchText,
                     bool forward,
                     bool matchCase,
                     bool findNext) = 0;
@@ -695,12 +699,6 @@ class CefBrowserHost : public virtual CefBaseRefCounted {
   ///
   /*--cef()--*/
   virtual void SendTouchEvent(const CefTouchEvent& event) = 0;
-
-  ///
-  // Send a focus event to the browser.
-  ///
-  /*--cef()--*/
-  virtual void SendFocusEvent(bool setFocus) = 0;
 
   ///
   // Send a capture lost event to the browser.
