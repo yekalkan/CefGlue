@@ -152,13 +152,13 @@
         }
 
 
-        private int on_quota_request(cef_request_handler_t* self, cef_browser_t* browser, cef_string_t* origin_url, long new_size, cef_request_callback_t* callback)
+        private int on_quota_request(cef_request_handler_t* self, cef_browser_t* browser, cef_string_t* origin_url, long new_size, cef_callback_t* callback)
         {
             CheckSelf(self);
 
             var m_browser = CefBrowser.FromNative(browser);
             var m_origin_url = cef_string_t.ToString(origin_url);
-            var m_callback = CefRequestCallback.FromNative(callback);
+            var m_callback = CefCallback.FromNative(callback);
 
             var result = OnQuotaRequest(m_browser, m_origin_url, new_size, m_callback);
 
@@ -169,25 +169,25 @@
         /// Called on the IO thread when JavaScript requests a specific storage quota
         /// size via the webkitStorageInfo.requestQuota function. |origin_url| is the
         /// origin of the page making the request. |new_size| is the requested quota
-        /// size in bytes. Return true to continue the request and call
-        /// CefRequestCallback::Continue() either in this method or at a later time to
-        /// grant or deny the request. Return false to cancel the request immediately.
+        /// size in bytes. Return true to continue the request and call CefCallback
+        /// methods either in this method or at a later time to grant or deny the
+        /// request. Return false to cancel the request immediately.
         /// </summary>
-        protected virtual bool OnQuotaRequest(CefBrowser browser, string originUrl, long newSize, CefRequestCallback callback)
+        protected virtual bool OnQuotaRequest(CefBrowser browser, string originUrl, long newSize, CefCallback callback)
         {
             callback.Continue(true);
             return true;
         }
 
 
-        private int on_certificate_error(cef_request_handler_t* self, cef_browser_t* browser, CefErrorCode cert_error, cef_string_t* request_url, cef_sslinfo_t* ssl_info, cef_request_callback_t* callback)
+        private int on_certificate_error(cef_request_handler_t* self, cef_browser_t* browser, CefErrorCode cert_error, cef_string_t* request_url, cef_sslinfo_t* ssl_info, cef_callback_t* callback)
         {
             CheckSelf(self);
 
             var m_browser = CefBrowser.FromNative(browser);
             var m_request_url = cef_string_t.ToString(request_url);
-            var m_ssl_info = CefSslInfo.FromNative(ssl_info); // TODO dispose?
-            var m_callback = CefRequestCallback.FromNativeOrNull(callback);
+            var m_ssl_info = CefSslInfo.FromNative(ssl_info);
+            var m_callback = CefCallback.FromNativeOrNull(callback);
 
             var result = OnCertificateError(m_browser, cert_error, m_request_url, m_ssl_info, m_callback);
 
@@ -196,13 +196,13 @@
 
         /// <summary>
         /// Called on the UI thread to handle requests for URLs with an invalid
-        /// SSL certificate. Return true and call CefRequestCallback::Continue() either
-        /// in this method or at a later time to continue or cancel the request. Return
-        /// false to cancel the request immediately. If
-        /// CefSettings.ignore_certificate_errors is set all invalid certificates will
-        /// be accepted without calling this method.
+        /// SSL certificate. Return true and call CefCallback methods either in this
+        /// method or at a later time to continue or cancel the request. Return false
+        /// to cancel the request immediately. If CefSettings.ignore_certificate_errors
+        /// is set all invalid certificates will be accepted without calling this
+        /// method.
         /// </summary>
-        protected virtual bool OnCertificateError(CefBrowser browser, CefErrorCode certError, string requestUrl, CefSslInfo sslInfo, CefRequestCallback callback)
+        protected virtual bool OnCertificateError(CefBrowser browser, CefErrorCode certError, string requestUrl, CefSslInfo sslInfo, CefCallback callback)
         {
             return false;
         }
@@ -250,25 +250,6 @@
         protected virtual bool OnSelectClientCertificate(CefBrowser browser, bool isProxy, string host, int port, CefX509Certificate[] certificates, CefSelectClientCertificateCallback callback)
         {
             return false;
-        }
-
-
-        private void on_plugin_crashed(cef_request_handler_t* self, cef_browser_t* browser, cef_string_t* plugin_path)
-        {
-            CheckSelf(self);
-
-            var m_browser = CefBrowser.FromNative(browser);
-            var m_plugin_path = cef_string_t.ToString(plugin_path);
-
-            OnPluginCrashed(m_browser, m_plugin_path);
-        }
-
-        /// <summary>
-        /// Called on the browser process UI thread when a plugin has crashed.
-        /// |plugin_path| is the path of the plugin that crashed.
-        /// </summary>
-        protected virtual void OnPluginCrashed(CefBrowser browser, string pluginPath)
-        {
         }
 
 

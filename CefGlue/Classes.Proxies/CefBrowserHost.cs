@@ -7,22 +7,21 @@
     using Xilium.CefGlue.Interop;
 
     /// <summary>
-    /// Class used to represent the browser process aspects of a browser window. The
-    /// methods of this class can only be called in the browser process. They may be
-    /// called on any thread in that process unless otherwise indicated in the
-    /// comments.
+    /// Class used to represent the browser process aspects of a browser. The methods
+    /// of this class can only be called in the browser process. They may be called
+    /// on any thread in that process unless otherwise indicated in the comments.
     /// </summary>
     public sealed unsafe partial class CefBrowserHost
     {
         /// <summary>
-        /// Create a new browser window using the window parameters specified by
-        /// |windowInfo|. All values will be copied internally and the actual window
-        /// will be created on the UI thread. If |request_context| is empty the
-        /// global request context will be used. This method can be called on any
-        /// browser process thread and will not block. The optional |extra_info|
-        /// parameter provides an opportunity to specify extra information specific
-        /// to the created browser that will be passed to
-        /// CefRenderProcessHandler::OnBrowserCreated() in the render process.
+        /// Create a new browser using the window parameters specified by |windowInfo|.
+        /// All values will be copied internally and the actual window (if any) will be
+        /// created on the UI thread. If |request_context| is empty the global request
+        /// context will be used. This method can be called on any browser process
+        /// thread and will not block. The optional |extra_info| parameter provides an
+        /// opportunity to specify extra information specific to the created browser
+        /// that will be passed to CefRenderProcessHandler::OnBrowserCreated() in the
+        /// render process.
         /// </summary>
         public static void CreateBrowser(CefWindowInfo windowInfo, CefClient client, CefBrowserSettings settings, string url, CefDictionaryValue extraInfo = null, CefRequestContext requestContext = null)
         {
@@ -43,17 +42,18 @@
                 var n_success = cef_browser_host_t.create_browser(n_windowInfo, n_client, &n_url, n_settings, n_extraInfo, n_requestContext);
                 if (n_success != 1) throw ExceptionBuilder.FailedToCreateBrowser(n_success);
             }
+
+            // TODO: free n_ structs ?
         }
 
 
         /// <summary>
-        /// Create a new browser window using the window parameters specified by
-        /// |windowInfo|. If |request_context| is empty the global request context
-        /// will be used. This method can only be called on the browser process UI
-        /// thread. The optional |extra_info| parameter provides an opportunity to
-        /// specify extra information specific to the created browser that will be
-        /// passed to CefRenderProcessHandler::OnBrowserCreated() in the render
-        /// process.
+        /// Create a new browser using the window parameters specified by |windowInfo|.
+        /// If |request_context| is empty the global request context will be used. This
+        /// method can only be called on the browser process UI thread. The optional
+        /// |extra_info| parameter provides an opportunity to specify extra information
+        /// specific to the created browser that will be passed to
+        /// CefRenderProcessHandler::OnBrowserCreated() in the render process.
         /// </summary>
         public static CefBrowser CreateBrowserSync(CefWindowInfo windowInfo, CefClient client, CefBrowserSettings settings, string url, CefDictionaryValue extraInfo = null, CefRequestContext requestContext = null)
         {
@@ -74,6 +74,8 @@
                 var n_browser = cef_browser_host_t.create_browser_sync(n_windowInfo, n_client, &n_url, n_settings, n_extraInfo, n_requestContext);
                 return CefBrowser.FromNative(n_browser);
             }
+
+            // TODO: free n_ structs ?
         }
 
 
@@ -102,9 +104,9 @@
 
         /// <summary>
         /// Helper for closing a browser. Call this method from the top-level window
-        /// close handler. Internally this calls CloseBrowser(false) if the close has
-        /// not yet been initiated. This method returns false while the close is
-        /// pending and true after the close has completed. See CloseBrowser() and
+        /// close handler (if any). Internally this calls CloseBrowser(false) if the
+        /// close has not yet been initiated. This method returns false while the close
+        /// is pending and true after the close has completed. See CloseBrowser() and
         /// CefLifeSpanHandler::DoClose() documentation for additional usage
         /// information. This method must be called on the browser process UI thread.
         /// </summary>
@@ -122,9 +124,10 @@
         }
 
         /// <summary>
-        /// Retrieve the window handle for this browser. If this browser is wrapped in
-        /// a CefBrowserView this method should be called on the browser process UI
-        /// thread and it will return the handle for the top-level native window.
+        /// Retrieve the window handle (if any) for this browser. If this browser is
+        /// wrapped in a CefBrowserView this method should be called on the browser
+        /// process UI thread and it will return the handle for the top-level native
+        /// window.
         /// </summary>
         public IntPtr GetWindowHandle()
         {
@@ -132,10 +135,10 @@
         }
 
         /// <summary>
-        /// Retrieve the window handle of the browser that opened this browser. Will
-        /// return NULL for non-popup windows or if this browser is wrapped in a
-        /// CefBrowserView. This method can be used in combination with custom handling
-        /// of modal windows.
+        /// Retrieve the window handle (if any) of the browser that opened this
+        /// browser. Will return NULL for non-popup browsers or if this browser is
+        /// wrapped in a CefBrowserView. This method can be used in combination with
+        /// custom handling of modal windows.
         /// </summary>
         public IntPtr GetOpenerWindowHandle()
         {
@@ -202,13 +205,12 @@
         /// selectable file types and may any combination of (a) valid lower-cased MIME
         /// types (e.g. "text/*" or "image/*"), (b) individual file extensions (e.g.
         /// ".txt" or ".png"), or (c) combined description and file extension delimited
-        /// using "|" and ";" (e.g. "Image Types|.png;.gif;.jpg").
-        /// |selected_accept_filter| is the 0-based index of the filter that will be
-        /// selected by default. |callback| will be executed after the dialog is
-        /// dismissed or immediately if another dialog is already pending. The dialog
-        /// will be initiated asynchronously on the UI thread.
+        /// using "|" and ";" (e.g. "Image Types|.png;.gif;.jpg"). |callback| will be
+        /// executed after the dialog is dismissed or immediately if another dialog is
+        /// already pending. The dialog will be initiated asynchronously on the UI
+        /// thread.
         /// </summary>
-        public void RunFileDialog(CefFileDialogMode mode, string title, string defaultFilePath, string[] acceptFilters, int selectedAcceptFilter, CefRunFileDialogCallback callback)
+        public void RunFileDialog(CefFileDialogMode mode, string title, string defaultFilePath, string[] acceptFilters, CefRunFileDialogCallback callback)
         {
             if (callback == null) throw new ArgumentNullException("callback");
 
@@ -219,7 +221,7 @@
                 var n_defaultFilePath = new cef_string_t(defaultFilePath_ptr, defaultFilePath != null ? defaultFilePath.Length : 0);
                 var n_acceptFilters = cef_string_list.From(acceptFilters);
 
-                cef_browser_host_t.run_file_dialog(_self, mode, &n_title, &n_defaultFilePath, n_acceptFilters, selectedAcceptFilter, callback.ToNative());
+                cef_browser_host_t.run_file_dialog(_self, mode, &n_title, &n_defaultFilePath, n_acceptFilters, callback.ToNative());
 
                 libcef.string_list_free(n_acceptFilters);
             }
@@ -298,23 +300,21 @@
         }
 
         /// <summary>
-        /// Search for |searchText|. |identifier| must be a unique ID and these IDs
-        /// must strictly increase so that newer requests always have greater IDs than
-        /// older requests. If |identifier| is zero or less than the previous ID value
-        /// then it will be automatically assigned a new valid ID. |forward| indicates
-        /// whether to search forward or backward within the page. |matchCase|
-        /// indicates whether the search should be case-sensitive. |findNext| indicates
-        /// whether this is the first request or a follow-up. The CefFindHandler
-        /// instance, if any, returned via CefClient::GetFindHandler will be called to
-        /// report find results.
+        /// Search for |searchText|. |forward| indicates whether to search forward or
+        /// backward within the page. |matchCase| indicates whether the search should
+        /// be case-sensitive. |findNext| indicates whether this is the first request
+        /// or a follow-up. The search will be restarted if |searchText| or |matchCase|
+        /// change. The search will be stopped if |searchText| is empty. The
+        /// CefFindHandler instance, if any, returned via CefClient::GetFindHandler
+        /// will be called to report find results.
         /// </summary>
-        public void Find(int identifier, string searchText, bool forward, bool matchCase, bool findNext)
+        public void Find(string searchText, bool forward, bool matchCase, bool findNext)
         {
             fixed (char* searchText_ptr = searchText)
             {
                 var n_searchText = new cef_string_t(searchText_ptr, searchText.Length);
 
-                cef_browser_host_t.find(_self, identifier, &n_searchText, forward ? 1 : 0, matchCase ? 1 : 0, findNext ? 1 : 0);
+                cef_browser_host_t.find(_self, &n_searchText, forward ? 1 : 0, matchCase ? 1 : 0, findNext ? 1 : 0);
             }
         }
 
@@ -594,7 +594,7 @@
         /// </summary>
         public void SendFocusEvent(bool setFocus)
         {
-            cef_browser_host_t.send_focus_event(_self, setFocus ? 1 : 0);
+            // TODO cef_browser_host_t.send_focus_event(_self, setFocus ? 1 : 0);
         }
 
         /// <summary>

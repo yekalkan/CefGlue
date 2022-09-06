@@ -1,4 +1,4 @@
-namespace Xilium.CefGlue
+﻿namespace Xilium.CefGlue
 {
     using System;
     using System.Collections.Generic;
@@ -22,6 +22,21 @@ namespace Xilium.CefGlue
         {
             return null;
         }
+
+
+        private cef_command_handler_t* get_command_handler(cef_client_t* self)
+        {
+            CheckSelf(self);
+
+            var result = GetCommandHandler();
+            return result != null ? result.ToNative() : null;
+        }
+
+        /// <summary>
+        /// Return the handler for commands. If no handler is provided the default
+        /// implementation will be used.
+        /// </summary>
+        protected virtual CefCommandHandler? GetCommandHandler() => null;
 
 
         private cef_context_menu_handler_t* get_context_menu_handler(cef_client_t* self)
@@ -142,6 +157,22 @@ namespace Xilium.CefGlue
         {
             return null;
         }
+
+
+        private cef_frame_handler_t* get_frame_handler(cef_client_t* self)
+        {
+            CheckSelf(self);
+
+            var result = GetFrameHandler();
+            return result != null ? result.ToNative() : null;
+        }
+
+        /// <summary>
+        /// Return the handler for events related to CefFrame lifespan. This method
+        /// will be called once during CefBrowser creation and the result will be
+        /// cached for performance reasons.
+        /// </summary>
+        protected virtual CefFrameHandler? GetFrameHandler() => null;
 
 
         private cef_jsdialog_handler_t* get_jsdialog_handler(cef_client_t* self)
@@ -279,8 +310,8 @@ namespace Xilium.CefGlue
 
         /// <summary>
         /// Called when a new message is received from a different process. Return true
-        /// if the message was handled or false otherwise. Do not keep a reference to
-        /// or attempt to access the message outside of this callback.
+        /// if the message was handled or false otherwise.  It is safe to keep a
+        /// reference to |message| outside of this callback.
         /// </summary>
         protected virtual bool OnProcessMessageReceived(CefBrowser browser, CefFrame frame, CefProcessId sourceProcess, CefProcessMessage message)
         {
