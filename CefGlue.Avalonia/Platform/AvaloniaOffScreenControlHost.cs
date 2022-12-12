@@ -55,7 +55,7 @@ namespace Xilium.CefGlue.Avalonia.Platform
             control.LostFocus += OnLostFocus;
 
             control.PointerMoved += OnPointerMoved;
-            control.PointerLeave += OnPointerLeave;
+            //control.PointerLeave += OnPointerLeave;
 
             control.PointerPressed += OnPointerPressed;
             control.PointerReleased += OnPointerReleased;

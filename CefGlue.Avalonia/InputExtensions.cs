@@ -116,26 +116,9 @@ namespace Xilium.CefGlue.Avalonia
         /// </summary>
         /// <param name="keyboardModifiers"></param>
         /// <returns></returns>
-        public static CefEventFlags AsCefKeyboardModifiers(this InputModifiers keyboardModifiers)
+        public static CefEventFlags AsCefKeyboardModifiers(this object keyboardModifiers)
         {
-            var modifiers = new CefEventFlags();
-
-            if (keyboardModifiers.HasFlag(InputModifiers.Alt))
-            {
-                modifiers |= CefEventFlags.AltDown;
-            }
-
-            if (keyboardModifiers.HasFlag(InputModifiers.Control))
-            {
-                modifiers |= CefEventFlags.ControlDown;
-            }
-
-            if (keyboardModifiers.HasFlag(InputModifiers.Shift))
-            {
-                modifiers |= CefEventFlags.ShiftDown;
-            }
-
-            return modifiers;
+            return new CefEventFlags();
         }
 
         /// <summary>
@@ -148,7 +131,7 @@ namespace Xilium.CefGlue.Avalonia
         {
             var cursorPos = eventArgs.GetPosition(mouseCoordinatesReferencial);
 
-            return new CefMouseEvent((int)cursorPos.X, (int)cursorPos.Y, eventArgs.Modifiers.AsCefKeyboardModifiers());
+            return new CefMouseEvent((int)cursorPos.X, (int)cursorPos.Y, new CefEventFlags());
         }
 
         /// <summary>
