@@ -26,7 +26,6 @@ namespace Xilium.CefGlue.Common
             if (settings == null)
             {
                 settings = new CefSettings { IgnoreCertificateErrors = true };
-                settings.
             }
 
             settings.UncaughtExceptionStackSize = 100; // for uncaught exception event work properly
