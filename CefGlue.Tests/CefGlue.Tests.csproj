@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CefGlue.Avalonia\CefGlue.Avalonia.csproj" />
+    <ProjectReference Include="..\CefGlue.Avalonia.Studio\CefGlue.Avalonia.Studio.csproj" />
     <ProjectReference Include="..\CefGlue.BrowserProcess\CefGlue.BrowserProcess.csproj" />
     <ProjectReference Include="..\CefGlue.Common\CefGlue.Common.csproj" />
     <ProjectReference Include="..\CefGlue\CefGlue.csproj" />
